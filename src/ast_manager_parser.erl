@@ -69,6 +69,8 @@ parse_response([<<"Mailbox: ", _/binary>>|T], Acc) ->
 	parse_response(T, Acc);
 parse_response([<<"Variable: ", _/binary>>|T], Acc) ->
 	parse_response(T, Acc);
+parse_response([<<"Uniqueid: ", _/binary>>|T], Acc) ->
+        parse_response(T, Acc);
 parse_response([], Acc) ->
 	Acc.
 
@@ -95,9 +97,7 @@ parse_event('Unhold', Elements) ->
 	hold_record(Elements, #hold{}, nil);
 parse_event('Hangup', Elements) ->
 	hangup_record(Elements, #hangup{}, nil);
-parse_event('OriginateSuccess', Elements) ->
-	originate_record(Elements, #originate{}, nil);
-parse_event('OriginateFailure', Elements) ->
+parse_event('OriginateResponse', Elements) ->
 	originate_record(Elements, #originate{}, nil);
 parse_event('Link', Elements) ->
 	link_record(Elements, #link{}, nil);
@@ -271,6 +271,18 @@ originate_record([<<"Reason: ", Reason/binary>>|T], Record, ActionID) ->
 		ActionID);
 originate_record([<<"Uniqueid: ", UID/binary>>|T], Record, ActionID) ->
 	originate_record(T, Record#originate{unique_id = binary_to_list(UID)},
+		ActionID);
+originate_record([<<"Response: ", Response/binary>>|T], Record, ActionID) ->
+        originate_record(T, Record#originate{response = binary_to_list(Response)},
+		ActionID);
+originate_record([<<"CallerID: ", CallerID/binary>>|T], Record, ActionID) ->
+        originate_record(T, Record#originate{callerid = binary_to_list(CallerID)},
+		ActionID);
+originate_record([<<"CallerIDName: ", Name/binary>>|T], Record, ActionID) ->
+        originate_record(T, Record#originate{calleridname = binary_to_list(Name)},
+		ActionID);
+originate_record([<<"CallerIDNum: ", Num/binary>>|T], Record, ActionID) ->
+        originate_record(T, Record#originate{calleridnum = binary_to_list(Num)},
 		ActionID);
 originate_record([Field|T], Record, ActionID) ->
 	?warning(io_lib:format("Ignoring ~p in  record.", [Field])),

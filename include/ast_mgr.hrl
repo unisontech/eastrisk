@@ -370,5 +370,9 @@
 	context,
 	exten,
 	reason,
+	response,
+	callerid,
+	calleridnum,
+	calleridname,
 	unique_id
 }).

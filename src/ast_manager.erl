@@ -1257,11 +1257,7 @@ handle_mgr_package(#state{callback = Callback, callback_state = CBState},
 	Callback:handle_event({ID, Record}, CBState);
 handle_mgr_package(State, {event, ID, Record, ActionID}) ->
 	case ID of % some return values will include more than one package
-		'OriginateFailure' ->
-			ets:insert(State#state.pkg_tbl, {ActionID, Record}),
-			send_reply(State#state.reply_tbl,
-				State#state.pkg_tbl, ActionID);
-		'OriginateSuccess' ->
+		'OriginateResponse' ->
 			ets:insert(State#state.pkg_tbl, {ActionID, Record}),
 			send_reply(State#state.reply_tbl,
 				State#state.pkg_tbl, ActionID);
