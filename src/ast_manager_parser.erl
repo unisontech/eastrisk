@@ -41,9 +41,9 @@ parse_package([<<"Asterisk Call Manager", _/binary>>|Package]) ->
 	% this line is always sent before the first package
 	parse_package(Package); 
 parse_package([<<"ActionID: ", ActionId/binary>> | Package]) ->
-    %% iaxpeers command begins with an ActionId
-    Param = parse_iaxlist(Package),
-    {response, 'Success', Param, list_to_integer(binary_to_list(ActionId))};
+	%% iaxpeers command begins with an ActionId
+	Param = parse_iaxlist(Package),
+	{response, 'Success', Param, list_to_integer(binary_to_list(ActionId))};
 parse_package([Ignore|Package]) ->
 	error_logger:info_report(["Warning, one line ignored",
 		{"Badly formated line", binary_to_list(Ignore)}]),
