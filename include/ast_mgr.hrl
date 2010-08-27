@@ -63,6 +63,7 @@
          queue,       % string()
          location,    % string()
          membership,  % string()
+         member_name, % string()
          penalty,     % integer()
          calls_taken, % integer()
          last_call,   % integer()
@@ -93,6 +94,8 @@
          dynamic,          % bool()
          nat_support,      % bool()
          acl,              % bool()
+	 video_support = false, % bool()
+         realtime_dev = false, % bool()
          status            % string()
         }).
 
@@ -253,6 +256,7 @@
 {
 	privilege,         % [atom()]
 	peer,              % string()
+	time,              % integer()
 	peer_status        % atom()
 }).
 

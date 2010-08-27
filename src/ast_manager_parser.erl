@@ -99,6 +99,10 @@ parse_event('Hangup', Elements) ->
 	hangup_record(Elements, #hangup{}, nil);
 parse_event('OriginateResponse', Elements) ->
 	originate_record(Elements, #originate{}, nil);
+parse_event('OriginateSuccess', Elements) ->
+	originate_record(Elements, #originate{}, nil);
+parse_event('OriginateFailure', Elements) ->
+	originate_record(Elements, #originate{}, nil);
 parse_event('Link', Elements) ->
 	link_record(Elements, #link{}, nil);
 parse_event('Unlink', Elements) ->
@@ -185,6 +189,8 @@ parse_event('QueueStatusComplete', Elements) ->
 	event_complete(Elements);
 parse_event('ParkedCallsComplete', Elements) ->
 	event_complete(Elements);
+parse_event('ZapShowChannelsComplete', Elements) ->
+    event_complete(Elements);
 
 
 %%% Event not handled. Normal if user events are used.
@@ -680,6 +686,8 @@ peer_status_record([<<"Privilege: ", Privilege/binary>>|T], Record, ActionID) ->
 		privileges_list(Privilege)}, ActionID);
 peer_status_record([<<"Peer: ", Peer/binary>>|T], Record, ActionID) ->
 	peer_status_record(T, Record#peer_status{peer = binary_to_list(Peer)}, ActionID);
+peer_status_record([<<"Time: ", Time/binary>>|T], Record, ActionID) ->
+	peer_status_record(T, Record#peer_status{time = list_to_integer(binary_to_list(Time))}, ActionID);
 peer_status_record([<<"PeerStatus: ", PeerStatus/binary>>|T], Record, ActionID) ->
 	peer_status_record(T, Record#peer_status{peer_status = 
 		binary_to_atom(PeerStatus)}, ActionID);
@@ -817,6 +825,9 @@ queue_member_record([<<"Privilege: ", Priv/binary>>|T], Record, ActionID) ->
 queue_member_record([<<"Queue: ", Queue/binary>>|T], Record, ActionID) ->
 	queue_member_record(T, Record#queue_member{queue = 
 		binary_to_list(Queue)}, ActionID);
+queue_member_record([<<"MemberName: ", Name/binary>>|T], Record, ActionID) ->
+	queue_member_record(T, Record#queue_member{member_name = 
+		binary_to_list(Name)}, ActionID);
 queue_member_record([<<"Location: ", Location/binary>>|T], Record, ActionID) ->
 	queue_member_record(T, Record#queue_member{location = 
 		binary_to_list(Location)}, ActionID);
@@ -898,6 +909,14 @@ sip_peer_record([<<"IPport: ", IPport/binary>>|T], Record, ActionID) ->
 sip_peer_record([<<"Dynamic: ", Dynamic/binary>>|T], Record, ActionID) ->
 	sip_peer_record(T, Record#sip_peer{
 		dynamic = eastrisk_types:to_bool(Dynamic)
+	}, ActionID);
+sip_peer_record([<<"VideoSupport: ", Video/binary>>|T], Record, ActionID) ->
+	sip_peer_record(T, Record#sip_peer{
+		video_support = eastrisk_types:to_bool(Video)
+	}, ActionID);
+sip_peer_record([<<"RealtimeDevice: ", Realtime/binary>>|T], Record, ActionID) ->
+	sip_peer_record(T, Record#sip_peer{
+		realtime_dev = eastrisk_types:to_bool(Realtime)
 	}, ActionID);
 sip_peer_record([<<"Natsupport: ", Natsupport/binary>>|T], Record, ActionID) ->
 	sip_peer_record(T, Record#sip_peer{nat_support =

@@ -1261,6 +1261,14 @@ handle_mgr_package(State, {event, ID, Record, ActionID}) ->
 			ets:insert(State#state.pkg_tbl, {ActionID, Record}),
 			send_reply(State#state.reply_tbl,
 				State#state.pkg_tbl, ActionID);
+		'OriginateSuccess' ->
+			ets:insert(State#state.pkg_tbl, {ActionID, Record}),
+			send_reply(State#state.reply_tbl,
+				State#state.pkg_tbl, ActionID);
+		'OriginateFailure' ->
+			ets:insert(State#state.pkg_tbl, {ActionID, Record}),
+			send_reply(State#state.reply_tbl,
+				State#state.pkg_tbl, ActionID);
 		'StatusComplete' ->
 			send_reply(State#state.reply_tbl,
 					   State#state.pkg_tbl, ActionID);
