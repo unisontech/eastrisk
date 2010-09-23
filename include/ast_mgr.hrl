@@ -30,6 +30,7 @@
 
 -record(mbox_count,
         {
+	 mailbox,     % string()
          old_messages, % integer()
          new_messages % integer()
         }).

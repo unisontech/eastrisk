@@ -745,6 +745,10 @@ exten_state_record([], Record, ActionID) ->
 
 mailbox_count_record([<<"ActionID: ", ActionID/binary>>|T], Record, _) ->
 	mailbox_count_record(T, Record, ActionID);
+mailbox_count_record([<<"Mailbox: ", MboxName/binary>>|T], Record, ActionID) ->
+	mailbox_count_record(T, Record#mbox_count{
+		mailbox = binary_to_list(MboxName)
+	}, ActionID);
 mailbox_count_record([<<"OldMessages: ", OldMsgs/binary>>|T], Record, ActionID) ->
 	mailbox_count_record(T, Record#mbox_count{
 		old_messages = binary_to_integer(OldMsgs)
