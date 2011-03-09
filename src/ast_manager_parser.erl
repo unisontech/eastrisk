@@ -222,7 +222,7 @@ unknown_event([<<"ActionID: ", ActionID/binary>>|T], Acc, _) ->
 	unknown_event(T, Acc, binary_to_integer(ActionID));
 unknown_event([Binary|T], Acc, ActionID) ->
 	String = binary_to_list(Binary),
-	{match, Start, Len} = regexp:first_match(String, "[A-Za-z]+: "),
+	{match, [{Start, Len} | _]} = re:run(String, "[A-Za-z]+: "),
 	Name = list_to_atom(string:substr(String, Start, Len - 2)),
 	Value = string:substr(String, Start + Len),
 	unknown_event(T, [{Name, Value}|Acc], ActionID);
@@ -1160,7 +1160,7 @@ privileges_list(Binary) ->
 
 cid_calling_pres(Binary) ->
 	String = binary_to_list(Binary),
-	{match, Start, Len} = regexp:first_match(String, "(-)?[0-9]+"),
+	{match, [{Start, Len} | _]} = re:run(String, "(-)?[0-9]+"),
 	string:substr(String, Start, Len).
 
 list_to_atoms([String|T], Acc) ->

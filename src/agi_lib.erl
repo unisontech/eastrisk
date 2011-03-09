@@ -30,8 +30,8 @@
 %% @end
 %% -----------------------------------------------------------------------------
 request_vars(RequestStr) ->
-	case  regexp:first_match(RequestStr, "\\?.*") of
-		{match, Start, _} ->
+	case  re:run(RequestStr, "\\?.*") of
+		{match, [{Start, _}, _]} ->
 			Vars = string:tokens(string:substr(RequestStr, Start + 1), "&"),
 			lists:map(fun(Element) ->
 				case string:tokens(Element, "=") of

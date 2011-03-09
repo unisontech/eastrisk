@@ -1330,7 +1330,7 @@ split_return_string(String) ->
 %% @end
 %% -----------------------------------------------------------------------------
 extract_result(String) ->
-	{match, 1, Len} = regexp:first_match(String, "^(-)?[0-9]+"),
+	{match, [{1, Len}|_]} = re:run(String, "^(-)?[0-9]+"),
 	[string:substr(String, 1, Len)].
 
 %% -----------------------------------------------------------------------------
@@ -1341,8 +1341,8 @@ extract_result(String) ->
 %% @end
 %% -----------------------------------------------------------------------------
 extract_value(String, Acc) ->
-	case regexp:first_match(String, "\\(.+\\)") of
-		{match, Start, Len} ->
+	case re:run(String, "\\(.+\\)") of
+		{match, [{Start, Len}|_]} ->
 			[string:substr(String, Start + 1, Len - 2)|Acc];
 		nomatch ->
 			Acc
@@ -1355,8 +1355,8 @@ extract_value(String, Acc) ->
 %% @end
 %% -----------------------------------------------------------------------------
 extract_endpos(String, Acc) ->
-	case regexp:first_match(String, "endpos=[0-9]+") of 
-		{match, Start, Len} ->
+	case re:run(String, "endpos=[0-9]+") of 
+		{match, [{Start, Len}|_]} ->
 			[string:substr(String, Start + 7, Len - 7)|Acc];
 		nomatch ->
 			Acc
