@@ -71,6 +71,8 @@ parse_response([<<"Variable: ", _/binary>>|T], Acc) ->
 	parse_response(T, Acc);
 parse_response([<<"Uniqueid: ", _/binary>>|T], Acc) ->
         parse_response(T, Acc);
+parse_response([<<"Eventlist: ", _/binary>>|T], Acc) ->
+        parse_response(T, Acc);
 parse_response([], Acc) ->
 	Acc.
 
@@ -691,6 +693,15 @@ peer_status_record([<<"Time: ", Time/binary>>|T], Record, ActionID) ->
 peer_status_record([<<"PeerStatus: ", PeerStatus/binary>>|T], Record, ActionID) ->
 	peer_status_record(T, Record#peer_status{peer_status = 
 		binary_to_atom(PeerStatus)}, ActionID);
+peer_status_record([<<"ChannelType: ", Type/binary>>|T], Record, ActionID) ->
+	peer_status_record(T, Record#peer_status{channel_type = 
+		binary_to_list(Type)}, ActionID);
+peer_status_record([<<"Address: ", Address/binary>>|T], Record, ActionID) ->
+	peer_status_record(T, Record#peer_status{address = 
+		binary_to_list(Address)}, ActionID);
+peer_status_record([<<"Port: ", Port/binary>>|T], Record, ActionID) ->
+	peer_status_record(T, Record#peer_status{port = 
+		binary_to_integer(Port)}, ActionID);
 peer_status_record([Field|T], Record, ActionID) ->
 	?warning(io_lib:format("Ignoring ~p in peer_status record.", [Field])),
 	peer_status_record(T, Record, ActionID);
@@ -756,6 +767,10 @@ mailbox_count_record([<<"OldMessages: ", OldMsgs/binary>>|T], Record, ActionID) 
 mailbox_count_record([<<"NewMessages: ", NewMsgs/binary>>|T], Record, ActionID) ->
 	mailbox_count_record(T, Record#mbox_count{
 		new_messages = binary_to_integer(NewMsgs)
+	}, ActionID);
+mailbox_count_record([<<"UrgMessages: ", UrgMsgs/binary>>|T], Record, ActionID) ->
+	mailbox_count_record(T, Record#mbox_count{
+		urg_messages = binary_to_integer(UrgMsgs)
 	}, ActionID);
 mailbox_count_record([Field|T], Record, ActionID) ->
 	?warning(io_lib:format("Ignoring ~p in mailbox_count record.", [Field])),
@@ -918,6 +933,8 @@ sip_peer_record([<<"VideoSupport: ", Video/binary>>|T], Record, ActionID) ->
 	sip_peer_record(T, Record#sip_peer{
 		video_support = eastrisk_types:to_bool(Video)
 	}, ActionID);
+sip_peer_record([<<"TextSupport: ", Status/binary>>|T], Record, ActionID) ->
+        sip_peer_record(T, Record#sip_peer{text_support = eastrisk_types:to_bool(Status)}, ActionID);
 sip_peer_record([<<"RealtimeDevice: ", Realtime/binary>>|T], Record, ActionID) ->
 	sip_peer_record(T, Record#sip_peer{
 		realtime_dev = eastrisk_types:to_bool(Realtime)
@@ -929,6 +946,10 @@ sip_peer_record([<<"ACL: ", ACL/binary>>|T], Record, ActionID) ->
 	sip_peer_record(T, Record#sip_peer{acl = eastrisk_types:to_bool(ACL)}, ActionID);
 sip_peer_record([<<"Status: ", Status/binary>>|T], Record, ActionID) ->
 	sip_peer_record(T, Record#sip_peer{status = binary_to_list(Status)}, ActionID);
+sip_peer_record([<<"Trunk: ", Status/binary>>|T], Record, ActionID) ->
+        sip_peer_record(T, Record#sip_peer{trunk = eastrisk_types:to_bool(Status)}, ActionID);
+sip_peer_record([<<"Encryption: ", Status/binary>>|T], Record, ActionID) ->
+        sip_peer_record(T, Record#sip_peer{encryption = eastrisk_types:to_bool(Status)}, ActionID);
 sip_peer_record([Field|T], Record, ActionID) ->
 	?warning(io_lib:format("Ignoring ~p in sip_peer record.", [Field])),
 	sip_peer_record(T, Record, ActionID);

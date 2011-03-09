@@ -31,6 +31,7 @@
 -record(mbox_count,
         {
 	 mailbox,     % string()
+         urg_messages, % integer()
          old_messages, % integer()
          new_messages % integer()
         }).
@@ -95,8 +96,11 @@
          dynamic,          % bool()
          nat_support,      % bool()
          acl,              % bool()
+         trunk = false,         % bool()
+         text_support = false,  % bool()
 	 video_support = false, % bool()
-         realtime_dev = false, % bool()
+         encryption = false,    % bool()
+         realtime_dev = false,  % bool()
          status            % string()
         }).
 
@@ -258,6 +262,9 @@
 	privilege,         % [atom()]
 	peer,              % string()
 	time,              % integer()
+        channel_type,      % string()
+        address,           % string()
+        port,              % integer()
 	peer_status        % atom()
 }).
 
