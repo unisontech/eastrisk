@@ -1330,8 +1330,8 @@ split_return_string(String) ->
 %% @end
 %% -----------------------------------------------------------------------------
 extract_result(String) ->
-	{match, [{1, Len}|_]} = re:run(String, "^(-)?[0-9]+"),
-	[string:substr(String, 1, Len)].
+	{match, [Result]} = re:run(String, "^(-)?[0-9]+", [{capture, first, list}]),
+	[Result].
 
 %% -----------------------------------------------------------------------------
 %% @spec extract_value(String::string(), Acc::list()) -> list()
@@ -1341,9 +1341,9 @@ extract_result(String) ->
 %% @end
 %% -----------------------------------------------------------------------------
 extract_value(String, Acc) ->
-	case re:run(String, "\\(.+\\)") of
-		{match, [{Start, Len}|_]} ->
-			[string:substr(String, Start + 1, Len - 2)|Acc];
+	case re:run(String, "\\((.+)\\)", [{capture, [1], list}]) of
+		{match, [Value|_]} ->
+			[Value|Acc];
 		nomatch ->
 			Acc
 	end.
@@ -1355,9 +1355,9 @@ extract_value(String, Acc) ->
 %% @end
 %% -----------------------------------------------------------------------------
 extract_endpos(String, Acc) ->
-	case re:run(String, "endpos=[0-9]+") of 
-		{match, [{Start, Len}|_]} ->
-			[string:substr(String, Start + 7, Len - 7)|Acc];
+	case re:run(String, "endpos=([0-9]+)", [{capture, [1], list}]) of 
+		{match, [EndPos|_]} ->
+			[EndPos|Acc];
 		nomatch ->
 			Acc
 	end.
