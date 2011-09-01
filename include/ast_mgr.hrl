@@ -219,7 +219,11 @@
 	privilege,         % [atom()]
 	event,             % string()
 	channel,           % string()
-	state,             % atom()
+        account_code,      % string()
+        exten,             % string()
+        context,           % string()
+	state,             % atom() | number()
+	state_desc,        % atom()
 	caller_id,         % string()
 	caller_id_name,    % string()
 	caller_id_num,     % string()
@@ -242,7 +246,8 @@
 {
 	privilege,         % [atom()]
 	channel,           % string()
-	state,             % atom()
+	state,             % atom() | integer()
+        state_desc,        % atom()
 	caller_id,         % string()
 	caller_id_name,    % string()
 	unique_id          % string()
@@ -254,6 +259,8 @@
 	channel,           % string()
 	cause,             % integer()
 	cause_txt,         % string()
+	caller_id,         % string()
+	caller_id_name,    % string()
 	unique_id          % string()
 }).
 
