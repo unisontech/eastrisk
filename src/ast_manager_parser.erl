@@ -224,7 +224,7 @@ unknown_event([<<"ActionID: ", ActionID/binary>>|T], Acc, _) ->
     unknown_event(T, Acc, binary_to_integer(ActionID));
 unknown_event([Binary|T], Acc, ActionID) ->
     String = binary_to_list(Binary),
-    {match, [NameStr, Value]} = re:run(String, "([A-Za-z]+): (.+)", [{capture, [1,2], list}]),
+    {match, [NameStr, Value]} = re:run(String, "([A-Za-z]+): (.*)", [{capture, [1,2], list}]),
     Name = list_to_atom(NameStr),
     unknown_event(T, [{Name, Value}|Acc], ActionID);
 unknown_event([], Acc, ActionID) ->
