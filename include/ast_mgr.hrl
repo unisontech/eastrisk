@@ -395,3 +395,78 @@
 	calleridname,
 	unique_id
 }).
+
+-record(agi_exec,
+{
+	result,
+	result_code,
+	command,
+	command_id,
+	channel,
+	sub_event,
+	privilege
+}).
+
+-record(var_set,
+{
+	uniqueid,
+	value,
+	variable,
+	channel,
+	privilege
+}).
+
+-record(rtcp_received,
+{
+	dlsr,
+	last_sr,
+	ia_jitter,
+	sequence_number_cycles,
+	highest_sequence,
+	packets_lost,
+	fraction_lost,
+	sender_ssrc,
+	reception_reports,
+	pt,
+	from,
+	privilege
+}).
+
+-record(rtcp_sent,
+{
+	dlsr,
+	their_last_sr,
+	ia_jitter,
+	cumulative_loss,
+	fraction_lost,
+	report_block,
+	sent_octets,
+	sent_packets,
+	sent_rtp,
+	sent_ntp,
+	our_ssrc,
+	to,
+	privilege
+}).
+
+-record(rtp_receiver_stat,
+{
+	rr_count,
+	transit,
+	jitter,
+	lost_packets,
+	received_packets,
+	ssrc,
+	privilege
+}).
+
+-record(rtp_sender_stat,
+{
+	rtt,
+	sr_count,
+	jitter,
+	lost_packets,
+	sent_packets,
+	ssrc,
+	privilege
+}).

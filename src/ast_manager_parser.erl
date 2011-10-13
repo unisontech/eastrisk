@@ -197,6 +197,20 @@ parse_event('ZapShowChannelsComplete', Elements) ->
     event_complete(Elements);
 
 
+parse_event('AGIExec', Elements) ->
+    agi_exec_record(Elements, #agi_exec{}, nil);
+parse_event('VarSet', Elements) ->
+    var_set_record(Elements, #var_set{}, nil);
+parse_event('RTCPReceived', Elements) ->
+    rtcp_received_record(Elements, #rtcp_received{}, nil);
+parse_event('RTCPSent', Elements) ->
+    rtcp_sent_record(Elements, #rtcp_sent{}, nil);
+parse_event('RTPReceiverStat', Elements) ->
+    rtp_receiver_stat_record(Elements, #rtp_receiver_stat{}, nil);
+parse_event('RTPSenderStat', Elements) ->
+    rtp_sender_stat_record(Elements, #rtp_sender_stat{}, nil);
+
+
 %%% Event not handled. Normal if user events are used.
 parse_event(Name, Elements) ->
     {Params, ActionID} = unknown_event(Elements, [], nil),
@@ -224,7 +238,7 @@ unknown_event([<<"ActionID: ", ActionID/binary>>|T], Acc, _) ->
     unknown_event(T, Acc, binary_to_integer(ActionID));
 unknown_event([Binary|T], Acc, ActionID) ->
     String = binary_to_list(Binary),
-    {match, [NameStr, Value]} = re:run(String, "([A-Za-z]+): (.+)", [{capture, [1,2], list}]),
+    {match, [NameStr, Value]} = re:run(String, "([A-Za-z]+):[ ]*(.*)", [{capture, [1,2], list}]),
     Name = list_to_atom(NameStr),
     unknown_event(T, [{Name, Value}|Acc], ActionID);
 unknown_event([], Acc, ActionID) ->
@@ -1168,6 +1182,145 @@ zap_channel_record([Field|T], Record, ActionID) ->
     zap_channel_record(T, Record, ActionID);
 zap_channel_record([], Record, ActionID) ->
     {Record, ActionID}.
+
+agi_exec_record([<<"Result: ", Data/binary>>|T], Record, ActionID) ->
+    agi_exec_record(T, Record#agi_exec{result = binary_to_list(Data)}, ActionID);
+agi_exec_record([<<"ResultCode: ", Data/binary>>|T], Record, ActionID) ->
+    agi_exec_record(T, Record#agi_exec{result_code = binary_to_integer(Data)}, ActionID);
+agi_exec_record([<<"Command: ", Data/binary>>|T], Record, ActionID) ->
+    agi_exec_record(T, Record#agi_exec{command = binary_to_list(Data)}, ActionID);
+agi_exec_record([<<"CommandId: ", Data/binary>>|T], Record, ActionID) ->
+    agi_exec_record(T, Record#agi_exec{command_id = binary_to_integer(Data)}, ActionID);
+agi_exec_record([<<"Channel: ", Data/binary>>|T], Record, ActionID) ->
+    agi_exec_record(T, Record#agi_exec{channel = binary_to_list(Data)}, ActionID);
+agi_exec_record([<<"SubEvent: ", Data/binary>>|T], Record, ActionID) ->
+    agi_exec_record(T, Record#agi_exec{sub_event = binary_to_list(Data)}, ActionID);
+agi_exec_record([<<"Privilege: ", Data/binary>>|T], Record, ActionID) ->
+    agi_exec_record(T, Record#agi_exec{privilege = privileges_list(Data)}, ActionID);
+agi_exec_record([Field|T], Record, ActionID) ->
+    ?warning(io_lib:format("Ignoring ~p in agi_exec record.", [Field])),
+    agi_exec_record(T, Record, ActionID);
+agi_exec_record([], Record, ActionID) ->
+    {Record, ActionID}.
+
+var_set_record([<<"Uniqueid: ", Data/binary>>|T], Record, ActionID) ->
+    var_set_record(T, Record#var_set{uniqueid = binary_to_list(Data)}, ActionID);
+var_set_record([<<"Value: ", Data/binary>>|T], Record, ActionID) ->
+    var_set_record(T, Record#var_set{value = binary_to_list(Data)}, ActionID);
+var_set_record([<<"Variable: ", Data/binary>>|T], Record, ActionID) ->
+    var_set_record(T, Record#var_set{variable = binary_to_list(Data)}, ActionID);
+var_set_record([<<"Channel: ", Data/binary>>|T], Record, ActionID) ->
+    var_set_record(T, Record#var_set{channel = binary_to_list(Data)}, ActionID);
+var_set_record([<<"Privilege: ", Data/binary>>|T], Record, ActionID) ->
+    var_set_record(T, Record#var_set{privilege = privileges_list(Data)}, ActionID);
+var_set_record([Field|T], Record, ActionID) ->
+    ?warning(io_lib:format("Ignoring ~p in var_set record.", [Field])),
+    var_set_record(T, Record, ActionID);
+var_set_record([], Record, ActionID) ->
+    {Record, ActionID}.
+
+rtcp_received_record([<<"DLSR: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{dlsr = binary_to_list(Data)}, ActionID);
+rtcp_received_record([<<"LastSR: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{last_sr = binary_to_float(Data)}, ActionID);
+rtcp_received_record([<<"IAJitter: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{ia_jitter = binary_to_integer(Data)}, ActionID);
+rtcp_received_record([<<"SequenceNumberCycles: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{sequence_number_cycles = binary_to_integer(Data)}, ActionID);
+rtcp_received_record([<<"HighestSequence: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{highest_sequence = binary_to_integer(Data)}, ActionID);
+rtcp_received_record([<<"PacketsLost: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{packets_lost = binary_to_integer(Data)}, ActionID);
+rtcp_received_record([<<"FractionLost: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{fraction_lost = binary_to_integer(Data)}, ActionID);
+rtcp_received_record([<<"SenderSSRC: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{sender_ssrc = binary_to_integer(Data)}, ActionID);
+rtcp_received_record([<<"ReceptionReports: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{reception_reports = binary_to_integer(Data)}, ActionID);
+rtcp_received_record([<<"PT: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{pt = binary_to_list(Data)}, ActionID);
+rtcp_received_record([<<"From: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{from = binary_to_list(Data)}, ActionID);
+rtcp_received_record([<<"Privilege: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_received_record(T, Record#rtcp_received{privilege = privileges_list(Data)}, ActionID);
+rtcp_received_record([Field|T], Record, ActionID) ->
+    ?warning(io_lib:format("Ignoring ~p in rtcp_received record.", [Field])),
+    rtcp_received_record(T, Record, ActionID);
+rtcp_received_record([], Record, ActionID) ->
+    {Record, ActionID}.
+
+rtcp_sent_record([<<"DLSR: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{dlsr = binary_to_list(Data)}, ActionID);
+rtcp_sent_record([<<"TheirLastSR: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{their_last_sr = binary_to_integer(Data)}, ActionID);
+rtcp_sent_record([<<"IAJitter: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{ia_jitter = binary_to_float(Data)}, ActionID);
+rtcp_sent_record([<<"CumulativeLoss: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{cumulative_loss = binary_to_integer(Data)}, ActionID);
+rtcp_sent_record([<<"FractionLost: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{fraction_lost = binary_to_integer(Data)}, ActionID);
+rtcp_sent_record([<<"SentOctets: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{sent_octets = binary_to_integer(Data)}, ActionID);
+rtcp_sent_record([<<"SentPackets: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{sent_packets = binary_to_integer(Data)}, ActionID);
+rtcp_sent_record([<<"SentRTP: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{sent_rtp = binary_to_integer(Data)}, ActionID);
+rtcp_sent_record([<<"SentNTP: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{sent_ntp = binary_to_float(Data)}, ActionID);
+rtcp_sent_record([<<"OurSSRC: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{our_ssrc = binary_to_integer(Data)}, ActionID);
+rtcp_sent_record([<<"To: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{to = binary_to_list(Data)}, ActionID);
+rtcp_sent_record([<<"Privilege: ", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{privilege = privileges_list(Data)}, ActionID);
+rtcp_sent_record([<<"ReportBlock:", Data/binary>>|T], Record, ActionID) ->
+    rtcp_sent_record(T, Record#rtcp_sent{report_block = Data}, ActionID);
+rtcp_sent_record([Field|T], Record, ActionID) ->
+    ?warning(io_lib:format("Ignoring ~p in rtcp_sent record.", [Field])),
+    rtcp_sent_record(T, Record, ActionID);
+rtcp_sent_record([], Record, ActionID) ->
+    {Record, ActionID}.
+
+rtp_receiver_stat_record([<<"RRCount: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_receiver_stat_record(T, Record#rtp_receiver_stat{rr_count = binary_to_integer(Data)}, ActionID);
+rtp_receiver_stat_record([<<"Transit: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_receiver_stat_record(T, Record#rtp_receiver_stat{transit = binary_to_list(Data)}, ActionID);
+rtp_receiver_stat_record([<<"Jitter: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_receiver_stat_record(T, Record#rtp_receiver_stat{jitter = binary_to_float(Data)}, ActionID);
+rtp_receiver_stat_record([<<"LostPackets: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_receiver_stat_record(T, Record#rtp_receiver_stat{lost_packets = binary_to_integer(Data)}, ActionID);
+rtp_receiver_stat_record([<<"ReceivedPackets: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_receiver_stat_record(T, Record#rtp_receiver_stat{received_packets = binary_to_integer(Data)}, ActionID);
+rtp_receiver_stat_record([<<"SSRC: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_receiver_stat_record(T, Record#rtp_receiver_stat{ssrc = binary_to_integer(Data)}, ActionID);
+rtp_receiver_stat_record([<<"Privilege: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_receiver_stat_record(T, Record#rtp_receiver_stat{privilege = privileges_list(Data)}, ActionID);
+rtp_receiver_stat_record([Field|T], Record, ActionID) ->
+    ?warning(io_lib:format("Ignoring ~p in rtp_receiver_stat record.", [Field])),
+    rtp_receiver_stat_record(T, Record, ActionID);
+rtp_receiver_stat_record([], Record, ActionID) ->
+    {Record, ActionID}.
+
+rtp_sender_stat_record([<<"RTT: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_sender_stat_record(T, Record#rtp_sender_stat{rtt = binary_to_float(Data)}, ActionID);
+rtp_sender_stat_record([<<"SRCount: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_sender_stat_record(T, Record#rtp_sender_stat{sr_count = binary_to_integer(Data)}, ActionID);
+rtp_sender_stat_record([<<"Jitter: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_sender_stat_record(T, Record#rtp_sender_stat{jitter = binary_to_integer(Data)}, ActionID);
+rtp_sender_stat_record([<<"LostPackets: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_sender_stat_record(T, Record#rtp_sender_stat{lost_packets = binary_to_integer(Data)}, ActionID);
+rtp_sender_stat_record([<<"SentPackets: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_sender_stat_record(T, Record#rtp_sender_stat{sent_packets = binary_to_integer(Data)}, ActionID);
+rtp_sender_stat_record([<<"SSRC: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_sender_stat_record(T, Record#rtp_sender_stat{ssrc = binary_to_integer(Data)}, ActionID);
+rtp_sender_stat_record([<<"Privilege: ", Data/binary>>|T], Record, ActionID) ->
+    rtp_sender_stat_record(T, Record#rtp_sender_stat{privilege = privileges_list(Data)}, ActionID);
+rtp_sender_stat_record([Field|T], Record, ActionID) ->
+    ?warning(io_lib:format("Ignoring ~p in rtp_sender_stat record.", [Field])),
+    rtp_sender_stat_record(T, Record, ActionID);
+rtp_sender_stat_record([], Record, ActionID) ->
+    {Record, ActionID}.
+
 
 %%% ============================================================================
 %%%                 Helper functions, type conversions etc.
