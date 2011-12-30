@@ -14,7 +14,7 @@
 	parse_package/1
         ]).
 
--include("ast_mgr.hrl").
+-include("../include/ast_mgr.hrl").
 
 -define(IAX_RE, "(\\S+)\\s+(\\S+)\\s+\\(.\\)\\s+(\\S+)\\s+(\\S+)(\\s+\\(.\\))?\\s+((OK .*)|(\\S+))").
 -define(warning(S), io:format("WARNING: ~p\n",[lists:flatten(S)])).
@@ -210,6 +210,8 @@ parse_event('RTPReceiverStat', Elements) ->
 parse_event('RTPSenderStat', Elements) ->
     rtp_sender_stat_record(Elements, #rtp_sender_stat{}, nil);
 
+parse_event('FullyBooted', Elements) ->
+    fully_booted_record(Elements, #fully_booted{}, nil);
 
 %%% Event not handled. Normal if user events are used.
 parse_event(Name, Elements) ->
@@ -427,6 +429,9 @@ registry_record([<<"Domain: ", Domain/binary>>|T], Record, ActionID) ->
 registry_record([<<"Status: ", Status/binary>>|T], Record, ActionID) ->
     registry_record(T, Record#registry{status = binary_to_atom(Status)},
         ActionID);
+registry_record([<<"ChannelType: ", Type/binary>>|T], Record, ActionID) ->
+    registry_record(T, Record#registry{channel_type =
+        binary_to_list(Type)}, ActionID);
 registry_record([Field|T], Record, ActionID) ->
     ?warning(io_lib:format("Ignoring ~p in registry record.", [Field])),
     registry_record(T, Record, ActionID);
@@ -1319,6 +1324,18 @@ rtp_sender_stat_record([Field|T], Record, ActionID) ->
     ?warning(io_lib:format("Ignoring ~p in rtp_sender_stat record.", [Field])),
     rtp_sender_stat_record(T, Record, ActionID);
 rtp_sender_stat_record([], Record, ActionID) ->
+    {Record, ActionID}.
+
+
+fully_booted_record([<<"Status: ", Status/binary>>|T], Record, ActionID) ->
+    fully_booted_record(T, Record#fully_booted{status = binary_to_atom(Status)},
+        ActionID);
+fully_booted_record([<<"Privilege: ", Data/binary>>|T], Record, ActionID) ->
+    fully_booted_record(T, Record#fully_booted{privilege = privileges_list(Data)}, ActionID);
+fully_booted_record([Field|T], Record, ActionID) ->
+    ?warning(io_lib:format("Ignoring ~p in fully_booted record.", [Field])),
+    fully_booted_record(T, Record, ActionID);
+fully_booted_record([], Record, ActionID) ->
     {Record, ActionID}.
 
 

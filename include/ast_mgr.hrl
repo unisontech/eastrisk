@@ -335,6 +335,7 @@
 -record(registry,
 {
 	privilege,
+	channel_type,
 	channel,
 	username,
 	domain,
@@ -468,5 +469,11 @@
 	lost_packets,
 	sent_packets,
 	ssrc,
+	privilege
+}).
+
+-record(fully_booted,
+{
+	status,
 	privilege
 }).
