@@ -400,8 +400,9 @@ login(Name, Passwd) ->
 	{ok, Challange} = send_cmd(Challenge),
 	Key = hex(erlang:md5(Challange ++ Passwd)),
 	Login = action("Login", [{"AuthType", "MD5"},
-							 {"UserName", Name},
-							 {"Key", Key}]),
+                                {"UserName", Name},
+                                {"Events", "Off"},
+                                {"Key", Key}]),
 	case send_cmd(Login) of
 		{ok, _} -> ok;
 		Error -> Error
@@ -657,9 +658,16 @@ parked_calls() ->
 %% @end
 %% -----------------------------------------------------------------------------
 ping() ->
+        %io:format("AM PING1 ~n",[]),
 	Cmd = action("Ping", []),
-	{pong, _} = send_cmd(Cmd),
-	pong.
+        %io:format("AM PING2 ~p ~n",[Cmd]),
+	%{pong, _} = send_cmd(Cmd),
+	%pong.
+        case send_cmd(Cmd) of
+            {pong, ok}-> pong;
+            {ok,   _} -> pong;
+            _         -> pang
+        end.
 
 %% -----------------------------------------------------------------------------
 %% @spec play_dtmf(Channel::string(), Digit::string()) -> mgr_response()
@@ -1191,6 +1199,7 @@ handle_info({tcp, _Socket, <<"\r\n">>}, State) ->
 	    {noreply, State};
 	_ ->
 	    Pkg = ast_manager_parser:parse_package(lists:reverse(State#state.pkg_acc)),
+            %io:format("AMHI: ~p ~n", [Pkg]),
 	    case Pkg of
 		[] ->
 		    {noreply, State};
@@ -1346,6 +1355,7 @@ strip_nl(Binary) ->
 %% @end
 %% -----------------------------------------------------------------------------
 send_cmd(Cmd) ->
+        %io:format("AM SM: ~p ~p ~n", [?NAME, Cmd]),
 	gen_server:call(?NAME, {'__send', Cmd}).
 
 

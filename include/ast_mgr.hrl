@@ -162,18 +162,23 @@
 
 -record(channel_status,
         {
-         privilege,      % [atom()]
-         channel,        % string()
-         caller_id,      % string()
-         caller_id_name, % string()
-         account,        % string()
-         state,          % atom(), 'Up' | 'Ringing' | 'Busy' | 'Down' | 'Rsrvd' | 'OffHook' | 'Dialing' | 'Ring'
-         context,        % string()
-         extension,      % string()
-         priority,       % string()
-         seconds,        % integer()
-         link,           % string()
-         unique_id       % string()
+         privilege,      	% [atom()]
+         channel,        	% string()
+         caller_id,      	% string()
+         caller_id_name, 	% string()
+         account,        	% string()
+         state,          	% atom(), 'Up' | 'Ringing' | 'Busy' | 'Down' | 'Rsrvd' | 'OffHook' | 'Dialing' | 'Ring'
+         context,        	% string()
+         extension,      	% string()
+         priority,       	% string()
+         seconds,        	% integer()
+         link,           	% string()
+         unique_id,       	% string()
+	 channel_state,   	% string()
+	 bridged_channel, 	% string()
+	 bridget_uniqueid, 	% string()
+	 caller_id_num,		% string()
+	 account_code		% string()
         }).
 
 -record(zap_channel,

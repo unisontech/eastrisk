@@ -44,6 +44,8 @@ parse_package([<<"ActionID: ", ActionId/binary>> | Package]) ->
     %% iaxpeers command begins with an ActionId
     Param = parse_iaxlist(Package),
     {response, 'Success', Param, list_to_integer(binary_to_list(ActionId))};
+%parse_package(<<"Ignore">>) ->
+%    {response, 'Success', "Ignore", 1};
 parse_package([Ignore|Package]) ->
     error_logger:info_report(["Warning, one line ignored",
         {"Badly formated line", binary_to_list(Ignore)}]),
@@ -70,9 +72,13 @@ parse_response([<<"Mailbox: ", _/binary>>|T], Acc) ->
 parse_response([<<"Variable: ", _/binary>>|T], Acc) ->
     parse_response(T, Acc);
 parse_response([<<"Uniqueid: ", _/binary>>|T], Acc) ->
-        parse_response(T, Acc);
+    parse_response(T, Acc);
 parse_response([<<"Eventlist: ", _/binary>>|T], Acc) ->
-        parse_response(T, Acc);
+    parse_response(T, Acc);
+parse_response([<<"Ping: Pong">>|_], {_, ActionID}) -> {{pong, ok}, ActionID};
+parse_response([<<"Ping: ", _/binary>>|_], {_, ActionID}) -> {{pong, nok}, ActionID};
+parse_response([_H|T], Acc) ->
+    parse_response(T, Acc);
 parse_response([], Acc) ->
     Acc.
 
@@ -252,7 +258,9 @@ unknown_event([Binary|T], Acc, ActionID) ->
 unknown_event([], Acc, ActionID) ->
     {Acc, ActionID}.
 
-event_complete([<<"ActionID: ", ActionID/binary>>]) ->
+%<<"ActionID: 404160006390">>
+%[<<"ActionID: 404160006390">>,<<"Items: 120">>]
+event_complete([<<"ActionID: ", ActionID/binary>>|_]) ->
     {nil, binary_to_integer(ActionID)};
 event_complete([_|T]) -> % ignore information stuff
     event_complete(T).
@@ -1207,6 +1215,18 @@ channel_status_record([<<"Link: ", Link/binary>>|T], Record, ActionID) ->
 channel_status_record([<<"Uniqueid: ", Uniqueid/binary>>|T], Record, ActionID) ->
     channel_status_record(T, Record#channel_status{unique_id =
         binary_to_list(Uniqueid)}, ActionID);
+channel_status_record([<<"ChannelState: ", ChannelState/binary>>|T], Record, ActionID) ->
+    channel_status_record(T, Record#channel_status{channel_state = binary_to_list(ChannelState)}, ActionID);
+channel_status_record([<<"ChannelStateDesc: ", ChannelStateDesc/binary>>|T], Record, ActionID) ->
+    channel_status_record(T, Record#channel_status{state = binary_to_atom(ChannelStateDesc)}, ActionID);
+channel_status_record([<<"BridgedChannel: ", BridgedChannel/binary>>|T], Record, ActionID) ->
+    channel_status_record(T, Record#channel_status{bridged_channel = binary_to_list(BridgedChannel)}, ActionID);
+channel_status_record([<<"BridgedUniqueid: ", BridgedUniqueid/binary>>|T], Record, ActionID) ->
+    channel_status_record(T, Record#channel_status{bridget_uniqueid = binary_to_list(BridgedUniqueid)}, ActionID);
+channel_status_record([<<"CallerIDNum: ", CallerIDNum/binary>>|T], Record, ActionID) ->
+    channel_status_record(T, Record#channel_status{caller_id_num = binary_to_list(CallerIDNum)}, ActionID);
+channel_status_record([<<"Accountcode: ", Accountcode/binary>>|T], Record, ActionID) ->
+    channel_status_record(T, Record#channel_status{account_code = binary_to_list(Accountcode)}, ActionID);
 channel_status_record([Field|T], Record, ActionID) ->
     ?warning(io_lib:format("Ignoring ~p in channel_status record.", [Field])),
     channel_status_record(T, Record, ActionID);

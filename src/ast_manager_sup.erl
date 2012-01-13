@@ -26,10 +26,10 @@ start_link() ->
 	supervisor:start_link(?MODULE, null).
 
 init(null) ->
-	{ok, Port}   = application:get_env(mgr_port),
-	{ok, Host}   = application:get_env(mgr_host),
-	{ok, Name}   = application:get_env(mgr_name),
-	{ok, Passwd} = application:get_env(mgr_secret),
+	{ok, Port}   = application:get_env(eastrisk, mgr_port),
+	{ok, Host}   = application:get_env(eastrisk, mgr_host),
+	{ok, Name}   = application:get_env(eastrisk, mgr_name),
+	{ok, Passwd} = application:get_env(eastrisk, mgr_secret),
 
 	MgrEventMgrSpec = {ast_manager_events, {ast_manager_events, start_link, []},
 				   permanent, 1000, worker, [ast_manager_events]},
