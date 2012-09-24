@@ -250,6 +250,8 @@
         state_desc,        % atom()
 	caller_id,         % string()
 	caller_id_name,    % string()
+        line_num,          % string()
+        line_name,         % string()
 	unique_id          % string()
 }).
 
@@ -261,6 +263,23 @@
 	cause_txt,         % string()
 	caller_id,         % string()
 	caller_id_name,    % string()
+        line_num,          % string()
+        line_name,         % string()
+	unique_id          % string()
+}).
+
+-record(hangup_request,
+{
+	privilege,         % [atom()]
+	channel,           % string()
+	unique_id          % string()
+}).
+
+-record(softhangup_request,
+{
+	privilege,         % [atom()]
+	channel,           % string()
+	cause,             % integer()
 	unique_id          % string()
 }).
 
@@ -272,6 +291,7 @@
         channel_type,      % string()
         address,           % string()
         port,              % integer()
+        cause,             % string()
 	peer_status        % atom()
 }).
 

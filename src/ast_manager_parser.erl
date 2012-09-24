@@ -17,7 +17,7 @@
 -include("../include/ast_mgr.hrl").
 
 -define(IAX_RE, "(\\S+)\\s+(\\S+)\\s+\\(.\\)\\s+(\\S+)\\s+(\\S+)(\\s+\\(.\\))?\\s+((OK .*)|(\\S+))").
--define(warning(S), io:format("WARNING: ~p\n",[lists:flatten(S)])).
+-define(warning(S), error_logger:info_report(["WARNING: ", lists:flatten(S)])).
 %-define(warning, ok).
 
 %% -----------------------------------------------------------------------------
@@ -99,6 +99,10 @@ parse_event('Unhold', Elements) ->
     hold_record(Elements, #hold{}, nil);
 parse_event('Hangup', Elements) ->
     hangup_record(Elements, #hangup{}, nil);
+parse_event('HangupRequest', Elements) ->
+    hangup_request_record(Elements, #hangup_request{}, nil);
+parse_event('SoftHangupRequest', Elements) ->
+    softhangup_request_record(Elements, #softhangup_request{}, nil);
 parse_event('OriginateResponse', Elements) ->
     originate_record(Elements, #originate{}, nil);
 parse_event('OriginateSuccess', Elements) ->
@@ -182,6 +186,8 @@ parse_event('ZapShowChannels', Elements) ->
 parse_event('PeerEntry', Elements) ->
     sip_peer_record(Elements, #sip_peer{}, nil);
 parse_event('DBGetResponse', Elements) ->
+    db_response(Elements, {nil, nil});
+parse_event('DBGetComplete', Elements) ->
     db_response(Elements, {nil, nil});
 parse_event('StatusComplete', Elements) ->
     event_complete(Elements);
@@ -322,7 +328,7 @@ voicemail_record([<<"Mailbox: ", Mailbox/binary>>|T], Record, ActionID) ->
     voicemail_record(T, Record#voicemail{mailbox = binary_to_list(Mailbox)},
         ActionID);
 voicemail_record([<<"Waiting: ", Waiting/binary>>|T], Record, ActionID) ->
-    voicemail_record(T, Record#voicemail{waiting = binary_to_list(Waiting)},
+    voicemail_record(T, Record#voicemail{waiting = binary_to_integer(Waiting)},
         ActionID);
 voicemail_record([<<"New: ", New/binary>>|T], Record, ActionID) ->
     voicemail_record(T, Record#voicemail{new = binary_to_integer(New)},
@@ -582,6 +588,12 @@ ast_state_record([<<"CallerIDName: ", CallerIDName/binary>>|T], Record, ActionID
 ast_state_record([<<"Uniqueid: ", Uniqueid/binary>>|T], Record, ActionID) ->
     ast_state_record(T, Record#ast_state{unique_id = binary_to_list(Uniqueid)},
         ActionID);
+ast_state_record([<<"ConnectedLineNum: ", Num/binary>>|T], Record, ActionID) ->
+    ast_state_record(T, Record#ast_state{line_num = binary_to_list(Num)},
+        ActionID);
+ast_state_record([<<"ConnectedLineName: ", Name/binary>>|T], Record, ActionID) ->
+    ast_state_record(T, Record#ast_state{line_name = binary_to_list(Name)},
+        ActionID);
 ast_state_record([Field|T], Record, ActionID) ->
     ?warning(io_lib:format("Ignoring ~p in ast_state record.", [Field])),
     ast_state_record(T, Record, ActionID);
@@ -692,11 +704,43 @@ hangup_record([<<"CallerIDNum: ", CallerId/binary>>|T], Record, ActionID) ->
         hangup_record(T, Record#hangup{caller_id = binary_to_list(CallerId)}, ActionID);
 hangup_record([<<"CallerIDName: ", CallerName/binary>>|T], Record, ActionID) ->
         hangup_record(T, Record#hangup{caller_id_name = binary_to_list(CallerName)}, ActionID);
+hangup_record([<<"ConnectedLineNum: ", Num/binary>>|T], Record, ActionID) ->
+        hangup_record(T, Record#hangup{line_num = binary_to_list(Num)}, ActionID);
+hangup_record([<<"ConnectedLineName: ", Name/binary>>|T], Record, ActionID) ->
+        hangup_record(T, Record#hangup{line_name = binary_to_list(Name)}, ActionID);
 hangup_record([Field|T], Record, ActionID) ->
     ?warning(io_lib:format("Ignoring ~p in hangup record.", [Field])),
     hangup_record(T, Record, ActionID);
 hangup_record([], Record, ActionID) ->
     {Record, ActionID}.
+
+
+hangup_request_record([<<"Privilege: ", Privilege/binary>>|T], Record, ActionID) ->
+    hangup_request_record(T, Record#hangup_request{privilege = privileges_list(Privilege)}, ActionID);
+hangup_request_record([<<"Channel: ", Channel/binary>>|T], Record, ActionID) ->
+    hangup_request_record(T, Record#hangup_request{channel = binary_to_list(Channel)}, ActionID);
+hangup_request_record([<<"Uniqueid: ", Uniqueid/binary>>|T], Record, ActionID) ->
+    hangup_request_record(T, Record#hangup_request{unique_id = binary_to_list(Uniqueid)}, ActionID);
+hangup_request_record([Field|T], Record, ActionID) ->
+    ?warning(io_lib:format("Ignoring ~p in hangup_request record.", [Field])),
+    hangup_request_record(T, Record, ActionID);
+hangup_request_record([], Record, ActionID) ->
+    {Record, ActionID}.
+
+softhangup_request_record([<<"Privilege: ", Privilege/binary>>|T], Record, ActionID) ->
+    softhangup_request_record(T, Record#softhangup_request{privilege = privileges_list(Privilege)}, ActionID);
+softhangup_request_record([<<"Channel: ", Channel/binary>>|T], Record, ActionID) ->
+    softhangup_request_record(T, Record#softhangup_request{channel = binary_to_list(Channel)}, ActionID);
+softhangup_request_record([<<"Uniqueid: ", Uniqueid/binary>>|T], Record, ActionID) ->
+    softhangup_request_record(T, Record#softhangup_request{unique_id = binary_to_list(Uniqueid)}, ActionID);
+softhangup_request_record([<<"Cause: ", Cause/binary>>|T], Record, ActionID) ->
+    softhangup_request_record(T, Record#softhangup_request{cause = binary_to_integer(Cause)}, ActionID);
+softhangup_request_record([Field|T], Record, ActionID) ->
+    ?warning(io_lib:format("Ignoring ~p in softhangup_request record.", [Field])),
+    softhangup_request_record(T, Record, ActionID);
+softhangup_request_record([], Record, ActionID) ->
+    {Record, ActionID}.
+
 
 caller_id_record([<<"Privilege: ", Privilege/binary>>|T], Record, ActionID) ->
     caller_id_record(T, Record#caller_id{privilege = 
@@ -748,6 +792,9 @@ peer_status_record([<<"Address: ", Address/binary>>|T], Record, ActionID) ->
 peer_status_record([<<"Port: ", Port/binary>>|T], Record, ActionID) ->
     peer_status_record(T, Record#peer_status{port = 
         binary_to_integer(Port)}, ActionID);
+peer_status_record([<<"Cause: ", Cause/binary>>|T], Record, ActionID) ->
+    peer_status_record(T, Record#peer_status{cause = 
+        binary_to_list(Cause)}, ActionID);
 peer_status_record([Field|T], Record, ActionID) ->
     ?warning(io_lib:format("Ignoring ~p in peer_status record.", [Field])),
     peer_status_record(T, Record, ActionID);

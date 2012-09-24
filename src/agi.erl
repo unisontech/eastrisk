@@ -1294,15 +1294,21 @@ interpret_result(Result) ->
 %% without hacking the C code a lot. Also, the 520 should <u>not</u> happen.
 %% @end
 %% -----------------------------------------------------------------------------
+return_code(<<"HANGUP", _Value/binary>>) ->
+    200;
 return_code(<<"200", _Value/binary>>) ->
-	200;
+    200;
+return_code(<<"511", _Value/binary>>) ->
+    511;
 return_code(<<"510", _Value/binary>>) ->
-	510.
+    510.
 
 %% Extracts a return value from an Asterisk AGI response
 %% Usually returns an integer, but if the AGI commands returns a value in
 %% parenthesis the value is returned as a string.
 %% 200 [Rr]esult=Value
+return_value(<<"HANGUP", _Value/binary>>) ->
+    "-1";
 return_value(<<_Code:3/binary, _:7/binary , $=, Value/binary>>) ->
 	ResString = binary_to_list(Value),
 	List = split_return_string(ResString),
