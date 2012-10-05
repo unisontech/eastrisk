@@ -30,10 +30,10 @@
 -module(agi_server).
 
 %%% API
--export([start_link/2, stop/0]).
+-export([start_link/3, stop/0]).
 
 %%% Internal exports
--export([init/3]).
+-export([init/4]).
 
 %%% OTP specific exports
 -export([system_continue/3, system_terminate/4, system_code_change/4]).
@@ -60,8 +60,8 @@
 %% </p>
 %% @end
 %% -----------------------------------------------------------------------------
-start_link(Port, Debug) ->
-	proc_lib:start_link(?MODULE, init, [self(), Port, Debug]).
+start_link(Port, Debug, Opts) ->
+	proc_lib:start_link(?MODULE, init, [self(), Port, Debug, Opts]).
 
 %% -----------------------------------------------------------------------------
 %% @spec stop() -> ok
@@ -83,11 +83,11 @@ stop() ->
 %% Called when by proc_lib:start_link when a AGI Server is started.
 %% @end
 %% -----------------------------------------------------------------------------
-init(Parent, Port, DebugOpts) ->
+init(Parent, Port, DebugOpts, Options) ->
 	{ok, Socket} = gen_tcp:listen(Port, [
 		binary,
 		{packet, line},
-		{active, false}
+		{active, false} | Options
 	]),
 	Debug = sys:debug_options(DebugOpts),
 	register(?MODULE, self()),

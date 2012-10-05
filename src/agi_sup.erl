@@ -28,8 +28,9 @@ start_link() ->
 
 %% @hidden
 init(null) ->
-	{ok, Port} = application:get_env(agi_port),
-	AGIServerSpec = {agi_server, {agi_server, start_link, [Port, []]},
+	{ok, Port}    = application:get_env(agi_port),
+    {ok, Options} = application:get_env(agi_server_options),
+	AGIServerSpec = {agi_server, {agi_server, start_link, [Port, [], Options]},
 				   permanent, 1000, worker, [agi_server, agi]},
 	AGIEventMgrSpec = {agi_events, {agi_events, start_link, []},
 				   permanent, 1000, worker, [agi_events]},
