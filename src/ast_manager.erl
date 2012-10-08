@@ -32,6 +32,8 @@
 -behaviour(gen_server).
 -vsn('0.1').
 
+-compile(export_all).
+
 %%% API functions
 -export([start_link/4, stop/0, behaviour_info/1]).
 
@@ -42,6 +44,11 @@
          agents/0,
          change_monitor/2,
          command/1,
+         confbridge_list_rooms/0,
+         confbridge_list/1,
+         confbridge_mute/2,
+         confbridge_unmute/2,
+         confbridge_kick/2,
          db_get/2,
          db_put/3,
          extension_state/2,
@@ -50,7 +57,7 @@
          get_var/2,
          hangup/1,
          iax_netstats/0,
-	 iax_peers/0,
+         iax_peers/0,
          list_commands/0,
          login/2,
          logoff/0,
@@ -245,6 +252,67 @@ change_monitor(Channel, File) ->
 command(Command) ->
 	Cmd = action("Command", [{"Command", Command}]),
 	send_cmd(Cmd).
+
+%% -----------------------------------------------------------------------------
+%% @spec confbridge_list_rooms() -> mgr_response()
+%% @doc
+%% Lists data about all active conferences. 
+%% @end
+%% -----------------------------------------------------------------------------
+confbridge_list_rooms() ->
+    ast_manager:send_event_response_cmd(action("ConfbridgeListRooms", [])).
+
+%% -----------------------------------------------------------------------------
+%% @spec confbridge_list_rooms(Conference::string()) -> mgr_response()
+%% @doc
+%% Lists all users in a particular ConfBridge conference.
+%% @end
+%% -----------------------------------------------------------------------------
+confbridge_list(Conference) ->
+    ast_manager:send_event_response_cmd(action("ConfbridgeList",
+                                               [{"Conference", Conference}])).
+
+%% -----------------------------------------------------------------------------
+%% @spec confbridge_mute(Conference::string(), Channel::string()) ->
+%%                                                              mgr_response()
+%% @doc
+%% Mutes a specified user in a specified conference.
+%% @end
+%% -----------------------------------------------------------------------------
+confbridge_mute(Conference, Channel) ->
+    ast_manager:send_event_response_cmd(action("ConfbridgeMute",
+                                               [
+                                                {"Conference", Conference},
+                                                {"Channel",    Channel}
+                                               ])).
+
+%% -----------------------------------------------------------------------------
+%% @spec confbridge_mute(Conference::string(), Channel::string()) ->
+%%                                                              mgr_response()
+%% @doc
+%% Unmutes a specified user in a specified conference.
+%% @end
+%% -----------------------------------------------------------------------------
+confbridge_unmute(Conference, Channel) ->
+    ast_manager:send_event_response_cmd(action("ConfbridgeUnmute",
+                                               [
+                                                {"Conference", Conference},
+                                                {"Channel",    Channel}
+                                               ])).
+
+%% -----------------------------------------------------------------------------
+%% @spec confbridge_mute(Conference::string(), Channel::string()) ->
+%%                                                              mgr_response()
+%% @doc
+%% Removes a specified user from a specified conference.
+%% @end
+%% -----------------------------------------------------------------------------
+confbridge_kick(Conference, Channel) ->
+    ast_manager:send_event_response_cmd(action("ConfbridgeKick",
+                                               [
+                                                {"Conference", Conference},
+                                                {"Channel",    Channel}
+                                               ])).
 
 %% -----------------------------------------------------------------------------
 %% @spec db_get(Family, Key) -> {ok, Value} | {error, Message}
@@ -1301,6 +1369,12 @@ handle_mgr_package(State, {event, ID, Record, ActionID}) ->
 					   State#state.pkg_tbl, ActionID);
 		'AgentsComplete' ->
 			send_reply(State#state.reply_tbl,
+					   State#state.pkg_tbl, ActionID);
+        'ConfbridgeListRoomsComplete' ->
+			send_reply(State#state.reply_tbl,
+					   State#state.pkg_tbl, ActionID);
+        'ConfbridgeListComplete' ->
+            send_reply(State#state.reply_tbl,
 					   State#state.pkg_tbl, ActionID);
 		_Else -> % collect package to return all of them together
 			ets:insert(State#state.pkg_tbl,
