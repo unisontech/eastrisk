@@ -32,8 +32,6 @@
 -behaviour(gen_server).
 -vsn('0.1').
 
--compile(export_all).
-
 %%% API functions
 -export([start_link/4, stop/0, behaviour_info/1]).
 
