@@ -25,7 +25,14 @@ start_link(Host, Port, Name, Secret) ->
 	{ok, _} ->
 		case ast_manager:login(Name, Secret) of
 			{Else, Vars} -> exit({Else, Vars});
-			ok           -> ok
+			ok           ->
+                case application:get_env(eastrisk, mgr_server_events_level) of
+                    {ok, Level} ->
+                        ok = ast_manager:events(Level);
+                    _NotSetted  ->
+                        nop
+                end,
+                ok
 		end;
 	_       -> ok
 	end,
