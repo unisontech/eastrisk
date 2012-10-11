@@ -1239,6 +1239,8 @@ handle_cast(Request, State) ->
 	{stop, {unhandled_cast, Request}, State}.
 
 %% @hidden
+handle_call(Call, _From, #state{active = false} = State) when Call =/= '__stop' ->
+    {reply, {error, disconnected}, State};
 handle_call({'__send', Pkg}, From, State) ->
 	Id = action_id(),
 	gen_tcp:send(State#state.socket, add_action_id(Pkg, Id)),
@@ -1259,18 +1261,14 @@ handle_call(Request, From, State) ->
 	{stop, {unhandled_call, {Request, From}}, State}.
 
 %% @hidden
-handle_info(reconnect, #state{connect_args   = ConnectArgs,
-                              callback       = Callback,
-                              callback_state = CBState
-                             } = State) ->
-    case apply(gen_tcp, connect, ConnectArgs) of
-		{ok, Socket} ->
-            proc_lib:spawn_link(Callback, connected, [CBState]),
-			{noreply, State#state{socket = Socket, active = true}};
+handle_info(reconnect, State) ->
+    error_logger:info_msg("connect ~p", [State#state.connect_args]),
+    case connect(State) of
+		{ok, NewState} ->
+			{noreply, NewState};
 		Error ->
-			% ugly hack to not make it hammer with connection attempts
-			timer:sleep(1000),
-			exit(Error)
+            error_logger:info_msg("connection error ~p", [Error]),
+            disconnect(State)
     end;
 handle_info({tcp, _Socket, <<"\r\n">>}, State) ->
     case State#state.pkg_acc of
@@ -1298,10 +1296,9 @@ handle_info({tcp, _Socket, <<"\n">>}, State) ->
 handle_info({tcp, _Socket, Data}, State) ->
 	Line = strip_nl(Data),
 	{noreply, State#state{pkg_acc = [Line | State#state.pkg_acc]}};
-handle_info({tcp_closed, Socket}, State) ->
-	{stop, {tcp_closed, Socket}, State};
-handle_info({tcp_error, Socket, Reason}, State) ->
-	{stop, {tcp_error, Socket, Reason}, State};
+handle_info({tcp_closed, _Socket}, State)         -> disconnect(State);
+handle_info({tcp_error, _Socket, _Reason}, State) -> disconnect(State);
+
 handle_info(Info, State) ->
 	{stop, {unhandled_info, Info}, State}.
 
@@ -1491,6 +1488,39 @@ send_reply(ReplyTid, PkgTid, ActionID) ->
 	ets:delete(ReplyTid, ActionID),
 	ets:delete(PkgTid, ActionID),
 	gen_server:reply(To, {ok, Pkgs}).
+
+%% @private
+%% Connect the socket if disconnected
+connect(#state{socket         = undefined,
+               connect_args   = ConnectArgs,
+               callback       = Callback,
+               callback_state = CBState
+              } = State) ->
+    case apply(gen_tcp, connect, ConnectArgs) of
+		{ok, Socket} ->
+            proc_lib:spawn_link(Callback, connected, [CBState]),
+			{ok, State#state{socket = Socket, active = true}};
+		Error ->
+            Error
+    end.
+
+%% @private
+%% Disconnect socket if connected
+disconnect(#state{socket = Socket, pkg_tbl = PKGTid,
+                  reply_tbl = RTTid} = State) ->
+
+    case Socket of
+        undefined -> ok;
+        Sock      -> gen_tcp:close(Sock)
+    end,
+
+    ets:delete_all_objects(PKGTid),
+    ets:delete_all_objects(RTTid),
+
+    NewState = State#state{socket = undefined, active = false, pkg_acc = []},
+    
+    erlang:send_after(1000, self(), reconnect),
+    {noreply, NewState}.
 
 %% -----------------------------------------------------------------------------
 %% @spec action_id() -> integer()
