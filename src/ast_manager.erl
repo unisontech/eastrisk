@@ -260,7 +260,7 @@ command(Command) ->
 %% @end
 %% -----------------------------------------------------------------------------
 confbridge_list_rooms() ->
-    ast_manager:send_event_response_cmd(action("ConfbridgeListRooms", [])).
+    send_event_response_cmd(action("ConfbridgeListRooms", [])).
 
 %% -----------------------------------------------------------------------------
 %% @spec confbridge_list_rooms(Conference::string()) -> mgr_response()
@@ -269,7 +269,7 @@ confbridge_list_rooms() ->
 %% @end
 %% -----------------------------------------------------------------------------
 confbridge_list(Conference) ->
-    ast_manager:send_event_response_cmd(action("ConfbridgeList",
+    send_event_response_cmd(action("ConfbridgeList",
                                                [{"Conference", Conference}])).
 
 %% -----------------------------------------------------------------------------
@@ -280,7 +280,7 @@ confbridge_list(Conference) ->
 %% @end
 %% -----------------------------------------------------------------------------
 confbridge_mute(Conference, Channel) ->
-    ast_manager:send_event_response_cmd(action("ConfbridgeMute",
+    send_event_response_cmd(action("ConfbridgeMute",
                                                [
                                                 {"Conference", Conference},
                                                 {"Channel",    Channel}
@@ -294,7 +294,7 @@ confbridge_mute(Conference, Channel) ->
 %% @end
 %% -----------------------------------------------------------------------------
 confbridge_unmute(Conference, Channel) ->
-    ast_manager:send_event_response_cmd(action("ConfbridgeUnmute",
+    send_event_response_cmd(action("ConfbridgeUnmute",
                                                [
                                                 {"Conference", Conference},
                                                 {"Channel",    Channel}
@@ -308,7 +308,7 @@ confbridge_unmute(Conference, Channel) ->
 %% @end
 %% -----------------------------------------------------------------------------
 confbridge_kick(Conference, Channel) ->
-    ast_manager:send_event_response_cmd(action("ConfbridgeKick",
+    send_event_response_cmd(action("ConfbridgeKick",
                                                [
                                                 {"Conference", Conference},
                                                 {"Channel",    Channel}
