@@ -103,7 +103,8 @@
 
 -include("ast_mgr.hrl").
 
--record(state, {socket, callback, callback_state, pkg_acc, pkg_tbl, reply_tbl}).
+-record(state, {socket, active, connect_args, callback, callback_state,
+                pkg_acc, pkg_tbl, reply_tbl}).
 
 -define(NAME, ast_manager).
 
@@ -138,7 +139,8 @@ stop() ->
 %% @hidden
 %% -----------------------------------------------------------------------------
 behaviour_info(callbacks) ->
-    [{handle_event, 2}, {init, 1}, {terminate, 2}, {code_change, 3}];
+    [{handle_event, 2}, {init, 1}, {terminate, 2}, {code_change, 3},
+     {connected, 1}];
 behaviour_info(_Other) ->
     undefined.
 
@@ -1217,22 +1219,20 @@ zap_transfer(ZapChannel) ->
 %% @hidden
 init({Callback, Host, Port, Args}) ->
 	{ok, CBState} = Callback:init(Args),
-	TCPOpts = [binary, {active, true}, {packet, line}],
-	case gen_tcp:connect(Host, Port, TCPOpts) of
-		{ok, Socket} ->
-			RTTid = ets:new(reply, [set, protected, {keypos, 1}]),
-			PKGTid = ets:new(pkgs, [bag, protected, {keypos, 1}]),
-			{ok, #state{socket = Socket,
-						callback = Callback,
-						callback_state = CBState,
-						reply_tbl = RTTid,
-						pkg_tbl = PKGTid,
-						pkg_acc = []}};
-		Error ->
-			% ugly hack to not make it hammer with connection attempts
-			timer:sleep(1000),
-			exit(Error)
-	end.
+    TCPOpts = [binary, {active, true}, {packet, line}],
+
+    RTTid  = ets:new(reply, [set, protected, {keypos, 1}]),
+    PKGTid = ets:new(pkgs,  [bag, protected, {keypos, 1}]),
+
+    self() ! reconnect,
+
+    {ok, #state{active = false,
+                connect_args = [Host, Port, TCPOpts, 12000],
+                callback = Callback,
+                callback_state = CBState,
+                reply_tbl = RTTid,
+                pkg_tbl = PKGTid,
+                pkg_acc = []}}.
 
 %% @hidden
 handle_cast(Request, State) ->
@@ -1259,6 +1259,19 @@ handle_call(Request, From, State) ->
 	{stop, {unhandled_call, {Request, From}}, State}.
 
 %% @hidden
+handle_info(reconnect, #state{connect_args   = ConnectArgs,
+                              callback       = Callback,
+                              callback_state = CBState
+                             } = State) ->
+    case apply(gen_tcp, connect, ConnectArgs) of
+		{ok, Socket} ->
+            proc_lib:spawn_link(Callback, connected, [CBState]),
+			{noreply, State#state{socket = Socket, active = true}};
+		Error ->
+			% ugly hack to not make it hammer with connection attempts
+			timer:sleep(1000),
+			exit(Error)
+    end;
 handle_info({tcp, _Socket, <<"\r\n">>}, State) ->
     case State#state.pkg_acc of
 	[] ->
@@ -1297,6 +1310,9 @@ terminate(Reason = {tcp_error, _Socket, _TCPReason}, State) ->
 	Callback = State#state.callback,
 	Callback:terminate(Reason, State#state.callback_state);
 terminate(Reason = {tcp_closed, _Socket}, State) ->
+	Callback = State#state.callback,
+	Callback:terminate(Reason, State#state.callback_state);
+terminate(Reason, #state{active = false} = State) ->
 	Callback = State#state.callback,
 	Callback:terminate(Reason, State#state.callback_state);
 terminate(Reason, State) ->

@@ -17,29 +17,31 @@
 
 -export([start_link/4]).
 
--export([init/1, handle_event/2, terminate/2, code_change/3]).
+-export([
+         init/1,
+         handle_event/2,
+         terminate/2,
+         code_change/3,
+         connected/1
+        ]).
 
 start_link(Host, Port, Name, Secret) ->
-	Result = ast_manager:start_link(?MODULE, Host, Port, nil),
-	case Result of
-	{ok, _} ->
-		case ast_manager:login(Name, Secret) of
-			{Else, Vars} -> exit({Else, Vars});
-			ok           ->
-                case application:get_env(eastrisk, mgr_server_events_level) of
-                    {ok, Level} ->
-                        ok = ast_manager:events(Level);
-                    _NotSetted  ->
-                        nop
-                end,
-                ok
-		end;
-	_       -> ok
-	end,
-	Result.
+	ast_manager:start_link(?MODULE, Host, Port, {Name, Secret}).
 
-init(nil) ->
-	{ok, nil}.
+connected({Name, Secret}) ->
+    case ast_manager:login(Name, Secret) of
+        {Else, Vars} -> exit({Else, Vars});
+        ok           ->
+            case application:get_env(eastrisk, mgr_server_events_level) of
+                {ok, Level} ->
+                    ok = ast_manager:events(Level);
+                _NotSetted  ->
+                    nop
+            end,
+            ok
+    end.
+
+init(State) -> {ok, State}.
 
 handle_event(Event, State) ->
 	ast_manager_events:notify_event(Event),
