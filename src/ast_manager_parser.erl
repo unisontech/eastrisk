@@ -225,6 +225,10 @@ parse_event('RTPSenderStat', Elements) ->
 parse_event('FullyBooted', Elements) ->
     fully_booted_record(Elements, #fully_booted{}, nil);
 
+parse_event('UserEvent', Elements) ->
+    {Params, ActionID} = unknown_event(Elements, [], nil),
+    {Params, ActionID};
+
 %%% Event not handled. Normal if user events are used.
 parse_event(Name, Elements) ->
     {Params, ActionID} = unknown_event(Elements, [], nil),
