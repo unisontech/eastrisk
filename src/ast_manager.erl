@@ -91,6 +91,11 @@
          zap_show_channels/0,
          zap_transfer/1]).
 
+-export([
+         action/2,
+         send_event_response_cmd/1
+        ]).
+
 %%% gen_server callbacks
 -export([init/1,
          handle_call/3,
